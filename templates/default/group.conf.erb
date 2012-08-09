@@ -2,16 +2,16 @@
 
 #<%= @name %>
 group  {
-<% @parameters.each do |parameter| -%>
-  <%= parameter %>;
+<% @parameters.each_pair do |param,value| -%>
+  <%= param %> <%= value %>;
+<% end -%>
+<% @options.each_pair do |option,value| -%>
+  option <%= option %> <%= value %>;
 <% end -%>
 
-<% @options.each do |option| -%>
-  option <%= option %>;
-<% end -%>
-
+  # hosts
 <% @hosts.each do |host| -%>
-  host <%= host.id %> {
-  }
+  include "<%= node[:dhcp][:config_dir] %>/hosts.d/<%= host %>.conf";
 <% end -%>
 }
+

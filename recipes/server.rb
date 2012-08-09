@@ -18,19 +18,22 @@
 # limitations under the License.
 #
 
-package "dhcp3-server"
+package node[:dhcp][:package]
 
-service "dhcp3-server" do
+service node[:dhcp][:package] do
   supports :restart => true, :status => true, :reload => true
   action [ :enable ]
 end
 
-template "/etc/default/dhcp3-server" do
-  owner "root"
-  group "root"
-  mode 0644
-  source "dhcp3-server.erb"
-  variables(:interfaces => node['dhcp']['interfaces'])
+case node[:dhcp][:package]
+when "dhcp3-server"
+  template "/etc/default/dhcp3-server" do
+    owner "root"
+    group "root"
+    mode 0644
+    source "dhcp3-server.erb"
+    variables(:interfaces => node['dhcp']['interfaces'])
+  end
 end
 
 #get any default attributes and merge them with the data bag items
@@ -43,23 +46,10 @@ allows.uniq!
 allows.sort!
 Chef::Log.debug "allows: #{allows}"
 
-parameters = []
-parametersh = {}
-node['dhcp']['parameters'].each {|k, v| parametersh[k] = v}
-parametersh.merge!(default['parameters'])
-parametersh.each {|k, v| parameters.push("#{k} #{v}")}
-parameters.sort!
-Chef::Log.debug "parameters: #{parameters}"
+parameters = default['parameters'] || {}
+options = default['options'] || {}
 
-options = []
-optionsh = {}
-node['dhcp']['options'].each {|k,v| optionsh[k] = v}
-optionsh.merge!(default['options'])
-optionsh.each {|k, v| options.push("#{k} #{v}")}
-options.sort!
-Chef::Log.info "options: #{options}"
-
-template "/etc/dhcp3/dhcpd.conf" do
+template "#{node[:dhcp][:config_dir]}/dhcpd.conf" do
   owner "root"
   group "root"
   mode 0644
@@ -70,31 +60,42 @@ template "/etc/dhcp3/dhcpd.conf" do
     :options => options
     )
   action :create
-  notifies :restart, resources(:service => "dhcp3-server"), :delayed
+  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
 end
 
 #groups
-groups = []
-directory "/etc/dhcp3/groups.d"
+groups = default['groups'] || {}
+groups_dir = "#{node[:dhcp][:config_dir]}/groups.d"
+directory groups_dir
 
-template "/etc/dhcp3/groups.d/group_list.conf" do
-  owner "root"
-  group "root"
-  mode 0644
-  source "list.conf.erb"
-  variables(
-    :item => "groups",
-    :items => groups
-    )
-  action :create
-  notifies :restart, resources(:service => "dhcp3-server"), :delayed
+groups.each_pair do |group_name, values|
+  dhcp_group group_name do
+    options values['options']
+    parameters values['parameters']
+    hosts values['hosts']
+    action :add
+  end
 end
 
-#subnets
-subnets = []
-directory "/etc/dhcp3/subnets.d"
+#template "#{groups_dir}/group_list.conf" do
+#  owner "root"
+#  group "root"
+#  mode 0644
+#  source "list.conf.erb"
+#  variables(
+#    :item => "groups",
+#    :items => groups
+#    )
+#  action :create
+#  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
+#end
 
-template "/etc/dhcp3/subnets.d/subnet_list.conf" do
+#subnets
+subnets = default['subnets'] || {}
+subnets_dir = "#{node[:dhcp][:config_dir]}/subnets.d"
+directory subnets_dir
+
+template "#{subnets_dir}/subnet_list.conf" do
   owner "root"
   group "root"
   mode 0644
@@ -104,21 +105,44 @@ template "/etc/dhcp3/subnets.d/subnet_list.conf" do
     :items => subnets
     )
   action :create
-  notifies :restart, resources(:service => "dhcp3-server"), :delayed
+  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
+end
+
+subnets.each_pair do |subnet_name, values|
+  dhcp_subnet subnet_name do
+    ranges values['ranges']
+    netmask values['netmask']
+    options values['options']
+    parameters values['parameters']
+    groups values['groups']
+    action :add
+  end
 end
 
 #hosts
-hosts = []
-directory "/etc/dhcp3/hosts.d"
-template "/etc/dhcp3/hosts.d/host_list.conf" do
-  owner "root"
-  group "root"
-  mode 0644
-  source "list.conf.erb"
-  variables(
-    :item => "hosts",
-    :items => hosts
-    )
-  action :create
-  notifies :restart, resources(:service => "dhcp3-server"), :delayed
+hosts = default['hosts'] || {}
+hosts_dir = "#{node[:dhcp][:config_dir]}/hosts.d"
+directory hosts_dir
+
+#template "#{hosts_dir}/host_list.conf" do
+#  owner "root"
+#  group "root"
+#  mode 0644
+#  source "list.conf.erb"
+#  variables(
+#    :item => "hosts",
+#    :items => hosts
+#    )
+#  action :create
+#  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
+#end
+
+hosts.each_pair do |host_name, values|
+  Chef::Log.info "hosts: #{host_name} #{values}"
+  dhcp_host host_name do
+    options values['options']
+    parameters values['parameters']
+    action :add
+  end
 end
+

@@ -1,18 +1,19 @@
 # File managed by Chef
 
 subnet <%= @subnet %> netmask <%= @netmask%> {
-range 
-<% if not @routers.empty? -%>
-  option routers <%= @routers.collect! {|i| "#{i}" }.join(",") %>;
+<% @ranges.each do |range| -%>
+  range <% range %>
 <% end -%>
-  option subnet-mask <%= @netmask %>;
-  option broadcast-address <%= @broadcast %>;
-<% if not @options.empty? -%>
-<%   @options.each do |option| -%>
-  <%= option %>;
-<%   end -%>
+<% @parameters.each_pair do |param,value| -%>
+  <%= param %> <%= value %>;
 <% end -%>
-}
+<% @options.each_pair do |option,value| -%>
+  option <%= option %> <%= value %>;
+<% end -%>
 
-<HOSTS TOO>
-<POOLS TOO>
+  #groups
+<% @groups.each do |group| -%>
+  include "<%= node[:dhcp][:config_dir] %>/groups.d/<%= group %>.conf";
+<% end -%>
+
+}

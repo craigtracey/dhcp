@@ -1,15 +1,55 @@
 {
-    "id": "default",
-    "allows": ["booting", "bootp"],
-    "parameters": {
-        "default-lease-time": "86400",
-        "max-lease-time": "604800"
-    },
-    "options": {
-        "domain-name-servers": [ ],
-        "domain-name": "domain_name",
-        "subnet-mask": "255.255.255.0",
-        "broadcast-address": "192.168.1.255",
-        "routers": "192.168.1.1"
-    }
+   "id":"default",
+   "allows":[
+      "booting",
+      "bootp"
+   ],
+   "groups":{
+      "openstack":{
+         "hosts":[
+            "controller1"
+         ],
+         "parameters":{
+            "next-server":"172.30.0.1"
+         },
+         "options":{
+            "root-path":"/root/path"
+         }
+      }
+   },
+   "subnets":{
+      "172.30.0.0":{
+         "groups":[
+            "openstack"
+         ],
+         "netmask":"255.255.252.0",
+         "parameters":{
+            "default-lease-time":"9600"
+         },
+         "options":{
+            "broadcast-address":"172.30.3.255",
+            "subnet-mask":"255.255.252.0"
+         }
+      }
+   },
+   "hosts":{
+      "controller1":{
+         "parameters":{
+            "hardware ethernet":"00:11:22:33:44:55",
+            "fixed-address":"172.30.0.170"
+         }
+      }
+   },
+   "parameters":{
+      "max-lease-time":"604800",
+      "default-lease-time":"86400"
+   },
+   "options":{
+      "domain-name-servers":"127.0.0.1",
+      "domain-name":"\"foo.example.com\"",
+      "routers":"172.30.0.1",
+      "broadcast-address":"172.30.3.255",
+      "subnet-mask":"255.255.252.0"
+   }
 }
+
