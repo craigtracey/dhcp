@@ -2,7 +2,7 @@
 
 subnet <%= @subnet %> netmask <%= @netmask%> {
 <% @ranges.each do |range| -%>
-  range <% range %>
+  range <%= range %>;
 <% end -%>
 <% @parameters.each_pair do |param,value| -%>
   <%= param %> <%= value %>;
