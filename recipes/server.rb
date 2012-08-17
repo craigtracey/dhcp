@@ -77,19 +77,6 @@ groups.each_pair do |group_name, values|
   end
 end
 
-#template "#{groups_dir}/group_list.conf" do
-#  owner "root"
-#  group "root"
-#  mode 0644
-#  source "list.conf.erb"
-#  variables(
-#    :item => "groups",
-#    :items => groups
-#    )
-#  action :create
-#  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
-#end
-
 #subnets
 subnets = default['subnets'] || {}
 subnets_dir = "#{node[:dhcp][:config_dir]}/subnets.d"
@@ -123,19 +110,6 @@ end
 hosts = default['hosts'] || {}
 hosts_dir = "#{node[:dhcp][:config_dir]}/hosts.d"
 directory hosts_dir
-
-#template "#{hosts_dir}/host_list.conf" do
-#  owner "root"
-#  group "root"
-#  mode 0644
-#  source "list.conf.erb"
-#  variables(
-#    :item => "hosts",
-#    :items => hosts
-#    )
-#  action :create
-#  notifies :restart, resources(:service => node[:dhcp][:package]), :delayed
-#end
 
 hosts.each_pair do |host_name, values|
   Chef::Log.info "hosts: #{host_name} #{values}"
